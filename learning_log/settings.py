@@ -40,6 +40,7 @@ INSTALLED_APPS = [
 
     # Мои приложения
     'l_logs',
+    'users',
 ]
 
 MIDDLEWARE = [
