@@ -9,6 +9,8 @@ app_name = 'users'
 urlpatterns = [
     # Страница входа
     path('login/', LoginView.as_view(template_name='users/login.html'), name='login'),
-    #Страница выхода
+    # Страница выхода
     path('logout/', views.logout_view, name='logout'),
+    # Страница регистрации
+    path('register/', views.register, name='register'),
 ]
