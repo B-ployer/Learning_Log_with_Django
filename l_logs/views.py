@@ -6,6 +6,12 @@ from django.contrib.auth.decorators import login_required
 from .models import Topic, Entry
 from .forms import TopicForm, EntryForm
 
+
+def check_topic_owner(request, topic):
+    if topic.owner != request.user:
+        raise Http404
+
+
 def index(request):
     """Домашняя страница приложения Learning Log"""
     return render(request, "l_logs\index.html")
@@ -24,8 +30,7 @@ def topic(request, topic_id):
     """Выводит одну тему и все её записи."""
     topic = Topic.objects.get(id=topic_id)
     # Проверка того, что тема принадлежит текущему пользователю.
-    if topic.owner != request.user:
-        raise Http404
+    check_topic_owner(request, topic)
 
     entries = topic.entry_set.order_by('-date_added')
     context = {'topic' : topic, 'entries' : entries}
@@ -42,7 +47,9 @@ def new_topic(request):
         # Отправлены данные POST; обработать данные.
         form = TopicForm(data=request.POST)
         if form.is_valid():
-            form.save()
+            new_topic = form.save(commit=False)
+            new_topic.owner = request.user
+            new_topic.save()
             return HttpResponseRedirect(reverse('l_logs:topics'))
 
     context = {'form' : form}
@@ -50,9 +57,11 @@ def new_topic(request):
 
 
 @login_required
-def  new_entry(request, topic_id):
+def new_entry(request, topic_id):
     """Добавляет новую запись по конкретной теме."""
     topic = Topic.objects.get(id=topic_id)
+    # Проверка того, что тема принадлежит текущему пользователю.
+    check_topic_owner(request, topic)
 
     if request.method != 'POST':
         # Данные не отправлялись; создаётся пустая форма.
@@ -75,8 +84,8 @@ def edit_entry(request, entry_id):
     """Редактирует существующую запись."""
     entry = Entry.objects.get(id=entry_id)
     topic = entry.topic
-    if topic.owner != request.user:
-        raise Http404
+    # Проверка того, что тема принадлежит текущему пользователю.
+    check_topic_owner(request, topic)
 
     if request.method != 'POST':
         # Исходный запрос; форма заполняется данными текущей записи.
